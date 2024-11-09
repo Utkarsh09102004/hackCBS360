@@ -1,0 +1,74 @@
+# Python-related files
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.pyo
+*.pyd
+*.pyo
+*.pyd
+
+# Django-related files
+*.sqlite3
+db.sqlite3
+*.log
+local_settings.py
+*.pot
+*.py[cod]
+*.mo
+
+# Ignore migrations except __init__.py
+*/migrations/*
+!*/migrations/__init__.py
+
+# PyCharm-related files
+.idea/
+*.iml
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+.ENV/
+
+# Static and media files
+/staticfiles/
+/media/
+
+# Django static and media collection folders
+/static/
+/media/
+
+# Coverage reports
+htmlcov/
+.coverage
+.tox/
+.pytest_cache/
+.cache/
+
+# Test and temp files
+coverage.xml
+nosetests.xml
+coverage/
+*.cover
+*.py,cover
+.hypothesis/
+
+# Node.js files (if you have frontend assets)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Ignore specific Django app and user uploaded files (optional)
+*.csv
+*.xls
+*.xlsx
+*.dat
+*.bak
+*.sql
+*.dump
+
+# Additional OS-specific files
+.DS_Store
+Thumbs.db
