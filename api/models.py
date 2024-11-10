@@ -1,7 +1,7 @@
 from django.db import models
 
 
-# Customer Model
+
 class Customer(models.Model):
     customer_id = models.AutoField(primary_key=True)
     name = models.CharField(max_length=255)
@@ -13,27 +13,17 @@ class Customer(models.Model):
 
 
 # Order Model
+from django.db import models
+
 class Order(models.Model):
-    PENDING = 'Pending'
-    SHIPPED = 'Shipped'
-    DELIVERED = 'Delivered'
-    CANCELED = 'Canceled'
-
-    ORDER_STATUS_CHOICES = [
-        (PENDING, 'Pending'),
-        (SHIPPED, 'Shipped'),
-        (DELIVERED, 'Delivered'),
-        (CANCELED, 'Canceled'),
-    ]
-
     order_id = models.AutoField(primary_key=True)
     order_status = models.CharField(
-        max_length=20,
-        choices=ORDER_STATUS_CHOICES,
-        default=PENDING
+        max_length=20,  # No choices argument here
+        default='Pending'
     )
     expected_delivery_date = models.DateField()
     customer = models.ForeignKey(Customer, related_name='orders', on_delete=models.CASCADE)
 
     def __str__(self):
         return f"Order {self.order_id} - {self.order_status}"
+

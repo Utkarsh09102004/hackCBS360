@@ -1,40 +1,35 @@
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from rest_framework import serializers
-from langchain.chains import LLMChain
-# from langchain_community.chat_message_histories import ChatMessageHistory
-from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain_groq import ChatGroq
-from django.conf import settings
-
-
-
-# ml functions
-groq_api_key = settings.GROQ_API_KEY
-llm = ChatGroq(model="llama3-8b-8192", groq_api_key=groq_api_key)
-
 import requests
+import os
 from langchain.agents import Tool, create_structured_chat_agent
+from langchain_groq import ChatGroq
+from dotenv import load_dotenv
 from langchain.prompts import PromptTemplate
 from langchain.output_parsers import ResponseSchema, StructuredOutputParser
+
 import json
 
+# from langchain_core.output_parsers import TextOutputParser
+
+# Replace the default JSON parser with a plain text parser
 
 
-# swagger_url = "http://127.0.0.1:8000/swagger.json"
-# swagger_response = requests.get(swagger_url)
-#
-# # Check if the response is successful
-# if swagger_response.status_code == 200:
-#     try:
-#         swagger_json = swagger_response.json()
-#     except requests.exceptions.JSONDecodeError:
-#         print("Failed to decode JSON. Response text:")
-#         print(swagger_response.text)
-# else:
-#     print(f"Failed to fetch Swagger JSON. Status code: {swagger_response.status_code}")
-#     print(swagger_response.text)
+load_dotenv()
+groq_api_key = os.getenv("GROQ_API_KEY")
+llm = ChatGroq(model="llama3-8b-8192", groq_api_key=groq_api_key, temperature=0.5)
+
+swagger_url = "http://127.0.0.1:8000/swagger.json"
+swagger_response = requests.get(swagger_url)
+
+# Check if the response is successful
+if swagger_response.status_code == 200:
+    try:
+        swagger_json = swagger_response.json()
+    except requests.exceptions.JSONDecodeError:
+        print("Failed to decode JSON. Response text:")
+        print(swagger_response.text)
+else:
+    print(f"Failed to fetch Swagger JSON. Status code: {swagger_response.status_code}")
+    print(swagger_response.text)
 
 
 # Custom function to make API calls based on Swagger JSON
@@ -62,10 +57,10 @@ def api_call(action, data=None):
 
 
 class APITool:
-    def __init__(self, action):  # Corrected __init__ method
+    def _init_(self, action):
         self.action = action
 
-    def __call__(self, tool_input):  # Corrected __call__ method
+    def _call_(self, tool_input):
         if isinstance(tool_input, str):
             try:
                 data = json.loads(tool_input)
@@ -75,7 +70,6 @@ class APITool:
             data = tool_input
 
         return api_call(self.action, data)
-
 
 
 # Define CRUD tools
@@ -261,110 +255,3 @@ def handle_user_query(query, history):
 
 
 # Example usage
-
-
-def sentiment_analysis_chat(input_text):
-    # Improved prompt for clearer and more accurate sentiment analysis
-    chat_prompt = ChatPromptTemplate(
-        [
-            ("system", "You are an advanced AI assistant skilled in sentiment analysis. Your task is to analyze the emotional tone of each line in a phone conversation and return a sentiment score as a single number between -1 and 1. Here’s how to interpret the scale:\n\n"
-             "-1: Strongly negative\n"
-             "-0.5: Moderately negative\n"
-             "0: Neutral\n"
-             "0.5: Moderately positive\n"
-             "1: Strongly positive\n\n"
-             "Only return the sentiment score as a number without additional text. Analyze the content carefully to accurately reflect the emotional tone."),
-            ("human", "{input}")
-        ]
-    )
-
-    # Create a conversation chain
-    conversation_chain = LLMChain(llm=llm, prompt=chat_prompt)
-
-    # Run the conversation chain with the user input
-    response = conversation_chain.run(input=input_text)
-    return response
-
-
-
-
-
-
-
-
-
-# serializers
-class StringInputSerializer(serializers.Serializer):
-    input_string = serializers.CharField(max_length=255)
-    additional_strings = serializers.ListField(
-        child=serializers.CharField(max_length=255),
-        allow_empty=True,
-        required=False
-    )
-
-
-from .models import Order
-
-class OrderSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Order
-        fields = ['order_id', 'order_status', 'expected_delivery_date', 'customer']
-
-
-# views
-class BasicResponseView(APIView):
-    def post(self, request):
-        # Validate input data using the serializer
-        serializer = StringInputSerializer(data=request.data)
-        if serializer.is_valid():
-            input_string = serializer.validated_data['input_string']
-            additional_strings = serializer.validated_data.get('additional_strings', [])
-
-            # Perform some processing on the input_string and additional_strings
-            # Here we will return multiple example strings as a list
-            response = handle_user_query(input_string, additional_strings)
-
-            # Return the response
-            return Response({
-                "original": input_string,
-                "additional": additional_strings,
-                "responses": response
-            }, status=status.HTTP_200_OK)
-
-        # If validation fails, return an error response
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-from django.shortcuts import get_object_or_404
-
-
-# class OrderDetail(APIView):
-#     def get(self, request, order_id):
-#         # Retrieve the order by ID
-#         order = get_object_or_404(Order, order_id=order_id)
-#         serializer = OrderSerializer(order)
-#         return Response(serializer.data)
-#
-#     def put(self, request, order_id):
-#         # Retrieve the order by ID
-#         order = get_object_or_404(Order, order_id=order_id)
-#         serializer = OrderSerializer(order, data=request.data, partial=True)
-#
-#         # Validate and save if data is valid
-#         if serializer.is_valid():
-#             serializer.save()
-#             return Response(serializer.data)
-#
-#         # Return errors if the data is invalid
-#         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-
-from rest_framework import viewsets  # Import your serializer
-from api.models import Order  # Import your Order model
-
-class OrderDetail(viewsets.ModelViewSet):
-    queryset = Order.objects.all()  # Define the queryset
-    serializer_class = OrderSerializer  # Set the serializer
-
